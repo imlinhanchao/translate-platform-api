@@ -10,16 +10,102 @@
     <script src="https://use.fontawesome.com/6364f396e2.js"></script>
     <link href="https://fonts.loli.net/css?family=Noto+Serif+SC|Noto+Sans+SC&display=swap" rel="stylesheet">
     <style>
-
+        * {
+            box-sizing: border-box;
+            font-family: "Noto Sans SC", PingFang SC,Helvetica Neue,Hiragino Sans GB,Segoe UI,Microsoft YaHei,微软雅黑,sans-serif;
+        }
+        body { 
+            margin: auto;
+            max-width: 750px;
+        }
+        #app {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            padding: 0 20px;
+        }
+        .header {
+            text-align: center;
+        }
+        .logo span{
+            vertical-align: middle;
+            font-size: 1.5em;
+        }
+        .logo img {
+            height: 50px;
+            vertical-align: middle;
+        }
+        .platforms {
+            position: relative;
+            margin: .5em auto;
+            width: 8em;
+            text-align: center;
+        }
+        .platform-actived {
+            cursor: pointer;
+        }
+        .platform-list {
+            text-align: left;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            position: absolute;
+            top: 1.8em;
+            left: 1.5em;
+            color: #FFF;
+            background-color: #343536;
+            border: 1px solid #000;
+            border-radius: .6em;
+        }
+        .platform-list::before {
+            content: "\f0d8";
+            color: #343536;
+            font: normal normal normal 14px/1 FontAwesome;
+            position: absolute;
+            top: -9px;
+            left: 50%;
+        }
+        .platform-item {
+            cursor: pointer;
+            padding: 5px;
+        }
+        .platform-item img, .platform-actived img{
+            width: 15px;
+            vertical-align: middle;
+        }
+        .translate-lang {
+            display: flex;
+        }
+        .translate-from, .translate-to {
+            flex: 1;
+            text-align: center;
+        }
     </style>
 </head>
 
 <body>
     <div id="app">
         <div class="header">
-            <h1 class="logo"><i class="fa fa-picture-o logo icon" aria-hidden="true"></i> Translate API</h1>
+            <h1 class="logo">
+                <img src="data:image/svg+xml;charset=utf-8,<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' version='1.1' id='Capa_1' x='0px' y='0px' viewBox='0 0 469.333 469.333' style='enable-background:new 0 0 469.333 469.333;' xml:space='preserve'><g><g><g><path d='M253.227,300.267L253.227,300.267L199.04,246.72l0.64-0.64c37.12-41.387,63.573-88.96,79.147-139.307h62.507V64H192 V21.333h-42.667V64H0v42.453h238.293c-14.4,41.173-36.907,80.213-67.627,114.347c-19.84-22.08-36.267-46.08-49.28-71.467H78.72 c15.573,34.773,36.907,67.627,63.573,97.28l-108.48,107.2L64,384l106.667-106.667l66.347,66.347L253.227,300.267z'/><path d='M373.333,192h-42.667l-96,256h42.667l24-64h101.333l24,64h42.667L373.333,192z M317.333,341.333L352,248.853 l34.667,92.48H317.333z'/></g></g></g></svg>" alt="" srcset=""> 
+                <span>Translate API Sample</span>
+            </h1>
         </div>
-
+        <div class="content">
+            <div class="platforms">
+                <div class="platform-actived" @click="choosePlatform = !choosePlatform"><img :src="platforms[platform][2]"> {{platforms[platform][1]}}</div>
+                <ul class="platform-list" v-show="choosePlatform">
+                    <li v-for="p, i in platforms" class="platform-item" @click="(platform = i) && (choosePlatform = false)"><img :src="p[2]"> {{p[1]}}</li>
+                </ul>
+            </div>
+            <div class="translate-form">
+                <div class="translate-lang">
+                    <div class="translate-from">{{langs[lang.from]}}</div>
+                    <div class="fa fa-exchange" @click="[lang.from, lang.to ] = [lang.to, lang.from ] && translate()"></div>
+                    <div class="translate-to">{{langs[lang.to]}}</div>
+                </div>
+            </div>
+        </div>
         </div>
         <script>
             let vm = new Vue({
@@ -27,17 +113,32 @@
                 data: {
                     api: '/',
                     lang: {
-                        from: '',
-                        to: '',
+                        from: 'zh',
+                        to: 'en',
                     },
-                    langs: {},
-                    error: ''
+                    langs: {
+                        zh: 'Chinese',
+                        en: 'English'
+                    },
+                    error: '',
+                    platform: 0,
+                    platforms: [
+                        ['google', 'Google', 'https://translate.google.cn/favicon.ico'],
+                        ['microsoft', 'Microsoft', 'https://www.microsoft.com/en-us/translator/wp-content/themes/ro-translator/img/banner-app-icon.png'],
+                        ['yandex', 'Yandex', `data:image/svg+xml;charset=utf-8,%3Csvg width='56' height='56' viewBox='0 0 250 250' xmlns='http://www.w3.org/2000/svg'%3E%3Cg transform='translate%2815.11 15.11%29' fill='none' fill-rule='evenodd'%3E%3Ccircle fill='%23000' cx='146.635' cy='73.146' r='73.146'/%3E%3Cpath d='M185.626 77.106c-2.193-5.48-6.43-9.77-12.321-12.517.968-4.683 1.292-8.48 1.394-10.966h-10.136c-.098 1.887-.355 4.683-1.03 8.13-7.908-1.147-16.819-.035-25.357 3.12a164.416 164.416 0 0 1-1.87-15.645c30.397-1.764 48.334-9.146 49.165-9.5l-3.899-9.42c-.186.08-17.165 7.01-45.66 8.711-.036-7.032.44-11.312.466-11.546H126.2c-.177 1.98-.475 6.118-.435 11.91-.315.004-.612.017-.937.022-9.084.022-17.529-.683-19.518-.864v10.257c2.98.261 10.186.82 18.386.82.395 0 .8-.005 1.208-.005.43-.004.83-.022 1.26-.027.4 5.827 1.169 12.5 2.514 19.784-13.453 8.06-24.131 23.704-18.692 36.425 2.286 5.34 6.695 8.764 12.423 9.637a19.2 19.2 0 0 0 2.97.222c5.79 0 12.432-2.366 18.772-6.39 4.152 6.226 7.495 9.5 7.797 9.784l6.962-7.413c-.067-.062-3.006-2.947-6.71-8.609 1.657-1.533 3.269-3.146 4.76-4.9a74.882 74.882 0 0 0 13.538-23.51c2.287 1.33 4.542 3.327 5.732 6.31 4.054 10.132-1.803 21.856-7.255 26.943l6.878 7.492c9.07-8.463 15.344-24.32 9.772-38.255m-61.702 28.237c-2.296-.354-3.73-1.462-4.64-3.593-2.504-5.862 2.93-15.42 11.784-21.795 2.215 8.117 5.052 14.985 7.938 20.559-5.412 3.527-10.949 5.445-15.082 4.83m25.347-13.86c-.71.833-1.47 1.613-2.228 2.392-2.518-5.161-4.951-11.44-6.802-18.866 5.665-2.304 11.504-3.527 16.916-3.527 1.23 0 2.437.062 3.618.19a64.722 64.722 0 0 1-11.504 19.81' fill='%23fff'/%3E%3Ccircle fill='%23f33' cx='73.146' cy='146.635' r='73.146'/%3E%3Cpath d='M67.798 100.736L33.883 183.15h13.88l8.339-21.925h34.303l8.34 21.925h13.875l-33.915-82.414H67.798zm5.455 17l12.632 32.28H60.617l12.636-32.28z' fill='%23fff'/%3E%3C/g%3E%3C/svg%3E`],
+                        ['tencent', 'Tencent', 'https://fanyi.qq.com/favicon.ico'],
+                        ['baidu', 'Baidu', 'https://fanyi-cdn.cdn.bcebos.com/static/translation/img/favicon/favicon_d87cd2a.ico'],
+                        ['youdao', 'Youdao', 'http://shared.ydstatic.com/images/favicon.ico'],
+                    ],
+                    choosePlatform: false
                 },
                 mounted() {
 
                 },
                 methods: {
+                    translate() {
 
+                    }
                 }
             })
         </script>

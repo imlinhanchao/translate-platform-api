@@ -26,6 +26,6 @@
   "homepage": "https://github.com/imlinhanchao/translate-platform-api#readme",
   "dependencies": {
     "formidable": "^1.2.2",
-    "translate-platforms": "0.0.2"
+    "translate-platforms": "0.0.5"
   }
 }
