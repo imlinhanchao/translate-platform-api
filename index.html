@@ -7,6 +7,7 @@
     <title>Translate API</title>
     <script src="https://cdn.bootcss.com/axios/0.19.2/axios.min.js"></script>
     <script src="https://cdn.bootcss.com/vue/2.6.11/vue.min.js"></script>
+    <script src="https://cdn.bootcss.com/lodash.js/4.13.1/lodash.min.js"></script>
     <script src="https://use.fontawesome.com/6364f396e2.js"></script>
     <link href="https://fonts.loli.net/css?family=Noto+Serif+SC|Noto+Sans+SC&display=swap" rel="stylesheet">
     <style>
@@ -27,6 +28,9 @@
         .header {
             text-align: center;
         }
+        .logo {
+            margin: .5em auto;
+        }
         .logo span{
             vertical-align: middle;
             font-size: 1.5em;
@@ -37,7 +41,7 @@
         }
         .platforms {
             position: relative;
-            margin: .5em auto;
+            margin: 1em auto;
             width: 8em;
             text-align: center;
         }
@@ -63,7 +67,7 @@
             font: normal normal normal 14px/1 FontAwesome;
             position: absolute;
             top: -9px;
-            left: 50%;
+            left: 60%;
         }
         .platform-item {
             cursor: pointer;
@@ -76,9 +80,41 @@
         .translate-lang {
             display: flex;
         }
+        .translate-swap {
+            cursor: pointer;
+        }
         .translate-from, .translate-to {
             flex: 1;
             text-align: center;
+        }
+        .translate-content {
+            margin: 1em;
+            display: flex;
+            height: 10em; 
+        }
+        .translate-source, .translate-result {
+            flex: 1;
+            overflow: auto hidden; 
+            height: 100%; 
+            direction: ltr; 
+            line-height: 1.5;   
+            padding: 10px;
+            border: #ddd 1px dashed;
+            resize: none;
+        }
+        .loading {
+            font-size: 24px;
+        }
+        .error {
+            border: 1px solid #FF5722;
+            background-color: #ffefe6;
+            border-radius: 4px;
+            color: #515a6e;
+            padding: 8px 48px 8px 16px;
+            margin: 10px 0;
+        }
+        .error i {
+            color: #F44336;
         }
     </style>
 </head>
@@ -95,16 +131,29 @@
             <div class="platforms">
                 <div class="platform-actived" @click="choosePlatform = !choosePlatform"><img :src="platforms[platform][2]"> {{platforms[platform][1]}}</div>
                 <ul class="platform-list" v-show="choosePlatform">
-                    <li v-for="p, i in platforms" class="platform-item" @click="(platform = i) && (choosePlatform = false)"><img :src="p[2]"> {{p[1]}}</li>
+                    <li v-for="p, i in platforms" class="platform-item" @click="switchPlatform(i)"><img :src="p[2]"> {{p[1]}}</li>
                 </ul>
             </div>
             <div class="translate-form">
                 <div class="translate-lang">
                     <div class="translate-from">{{langs[lang.from]}}</div>
-                    <div class="fa fa-exchange" @click="[lang.from, lang.to ] = [lang.to, lang.from ] && translate()"></div>
+                    <div class="translate-swap fa fa-exchange" @click="swpLang()"></div>
                     <div class="translate-to">{{langs[lang.to]}}</div>
                 </div>
+                <div class="translate-content">
+                    <textarea class="translate-source" rows="1" v-model="word"
+                        spellcheck="false" 
+                        autocapitalize="off" 
+                        autocomplete="off" 
+                        autocorrect="off" >
+                    </textarea>
+                    <div class="translate-result">
+                        <i v-if="loading" class="fa fa-spinner fa-pulse fa-3x fa-fw margin-bottom loading"></i>
+                        <span v-if="!loading">{{result}}</span>
+                    </div>
+                </div>
             </div>
+            <div class="error" v-if="error"><i class="fa fa-exclamation" aria-hidden="true"></i> 错误：{{error}}</div>
         </div>
         </div>
         <script>
@@ -130,14 +179,68 @@
                         ['baidu', 'Baidu', 'https://fanyi-cdn.cdn.bcebos.com/static/translation/img/favicon/favicon_d87cd2a.ico'],
                         ['youdao', 'Youdao', 'http://shared.ydstatic.com/images/favicon.ico'],
                     ],
-                    choosePlatform: false
+                    choosePlatform: false,
+                    word: '',
+                    result: '',
+                    loading: false
+                },
+                created () {
+                    this.debouncedTranslate = _.debounce(this.translate, 500)
                 },
                 mounted() {
 
                 },
+                computed: {
+                    form() {
+                        return {
+                            word: this.word,
+                            platform: this.platforms[this.platform][0],
+                            ...this.lang
+                        }
+                    }
+                },
+                watch: {
+                    word() {
+                        this.debouncedTranslate();
+                    }
+                },
                 methods: {
+                    switchPlatform(i) {
+                        this.platform = i;
+                        this.choosePlatform = false;
+                        this.translate();
+                    },
+                    swpLang() {
+                        this.lang = { from: this.lang.to, to: this.lang.from };
+                        this.translate()
+                    },
                     translate() {
+                        if(!this.word) return;
+                        this.error = '';
+                        let param = new FormData();
 
+                        for(let k in this.form) {
+                            param.append(k, this.form[k]);
+                        }
+
+                        this.loading = true;
+                        axios.post(this.api, param, {
+                            headers: {
+                                'Content-Type': 'multipart/form-data'
+                            }
+                        }).then(rsp => {
+                            this.loading = false;
+                            rsp = rsp.data;
+                            if (rsp.status) {
+                                this.error = rsp.msg;
+                                return;
+                            }
+                            this.result = rsp.data.word;
+                            if (!this.result) this.swpLang();
+                        }).catch(err => {
+                            this.loading = false;
+                            this.error = err.message;
+                        })
                     }
                 }
             })

@@ -2,6 +2,7 @@ const http = require('http');
 const fs = require("fs");
 const path = require("path");
 const formidable = require('formidable');
+const translate = require('translate-platforms');
 
 const github = 'https://github.com/imlinhanchao/translate-platform-api'
 
@@ -25,7 +26,27 @@ async function createServer() {
 
                 const form = formidable({ multiples: true });
                 form.parse(request, async (err, fields, files) => {
-                    
+                    let { platform, to, from, word } = fields;
+                    if (!word || !platform || !to) return response.end(JSON.stringify({
+                        status: 2,
+                        msg: 'Parameter error!'
+                    }));
+
+                    try {
+                        let data = await translate[platform](word, { to, from });
+
+                        response.end(JSON.stringify({
+                            status: 0,
+                            msg: 'tranlate success',
+                            data
+                        }));
+                    } catch (error) {
+                        response.end(JSON.stringify({
+                            status: 3,
+                            msg: error.message
+                        }));
+                    }
+
                 });
                          
             } catch (error) {
