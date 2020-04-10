@@ -201,6 +201,7 @@
                 },
                 watch: {
                     word() {
+                        if (this.word == '') this.result = '';      
                         this.debouncedTranslate();
                     }
                 },
@@ -235,7 +236,7 @@
                                 this.error = rsp.msg;
                                 return;
                             }
-                            this.result = rsp.data.word;
+                            this.result = rsp.data.text;
                             if (!this.result) this.swpLang();
                         }).catch(err => {
                             this.loading = false;
